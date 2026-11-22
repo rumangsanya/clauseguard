@@ -30,9 +30,9 @@
 // "ON_DEVICE" | "IN_CLOUD" | "MOCK".
 // ============================================================================
 
-import { firebaseConfig, isFirebaseConfigured } from "./config.js";
-import { generateWithFirebase } from "./firebase-ai.js";
-import { mockGenerate } from "./mock.js";
+import { firebaseConfig, isFirebaseConfigured } from "./config.js?v=20261122-2";
+import { generateWithFirebase } from "./firebase-ai.js?v=20261122-2";
+import { mockGenerate } from "./mock.js?v=20261122-2";
 
 const PRIVACY_TO_FIREBASE_MODE = {
   "device-only": "ONLY_ON_DEVICE",
