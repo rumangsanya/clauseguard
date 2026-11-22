@@ -12,13 +12,13 @@
 //     (Gemini Nano on-device via Firebase AI Logic, or a cloud Gemini
 //     model) — hybrid inference is provided BY Firebase AI Logic itself.
 //
-//   MOCK fallback (NOT a model, NOT an API).
+//   LOCAL RULE-ENGINE fallback (NOT a model, NOT an API).
 //     If Firebase AI Logic is unreachable (offline, App Check not yet
 //     registered for this origin, quota, …), generate() falls back to the
 //     deterministic local keyword heuristic in js/mock.js. It runs entirely
 //     on-device, sends nothing anywhere, and every result it produces is
-//     badged "MOCK" in the UI so it can never be mistaken for a model
-//     response.
+//     labelled "local rule engine (not AI)" in the UI so it can never be
+//     mistaken for a model response.
 //
 // There is deliberately NO direct Chrome Prompt API generation path in this
 // build: the #BuildHybridAI rules require all app inference to go through
@@ -83,7 +83,7 @@ export function detectOnDevice() {
 /**
  * Generate text with privacy-aware routing.
  * @param {string} prompt
- * @param {{ kind?: "analyze"|"email"|"generic",
+ * @param {{ kind?: "analyze"|"email"|"summary"|"generic",
  *           privacy?: "device-only"|"hybrid"|"cloud",
  *           context?: object }} options
  */
@@ -102,13 +102,13 @@ export async function generate(prompt, options = {}) {
       return { text, engine: source, via: "firebase-ai-logic" };
     } catch {
       // Firebase unreachable (offline, App Check pending for this origin,
-      // quota…). Fall through to the labelled local mock — for the
-      // "device-only" analysis this is still privacy-safe: the mock is a
+      // quota…). Fall through to the labelled local rule engine — for the
+      // "device-only" analysis this is still privacy-safe: the fallback is a
       // local heuristic and the contract text never leaves the device.
     }
   }
 
-  // Mock fallback — deterministic local heuristic, always labelled MOCK.
+  // Local rule-engine fallback — deterministic heuristic, always labelled.
   return { text: mockGenerate(prompt, kind, context), engine: "MOCK", via: "mock" };
 }
 
@@ -117,5 +117,5 @@ export async function currentMode() {
   if (isFirebaseConfigured()) {
     return { label: "Firebase AI Logic — hybrid", tier: 1 };
   }
-  return { label: "MOCK engine (Firebase not configured)", tier: 3 };
+  return { label: "Local rule engine — not AI (Firebase not configured)", tier: 3 };
 }

@@ -22,7 +22,7 @@ python3 -m http.server 8000
 The app is wired to the real Firebase project **clauseguard-23269** with AI
 Logic enabled, so generation routes through Firebase AI Logic. If Firebase is
 unreachable (offline, or App Check not yet registered for the serving
-origin), the app falls back to a clearly-labelled **mock engine**
+origin), the app falls back to a clearly-labelled **local rule engine**
 (deterministic keyword heuristic — not AI, runs locally) so the full UX can
 still be exercised anywhere.
 
@@ -55,9 +55,9 @@ app/
   css/styles.css    styling
   js/config.js      Firebase config for clauseguard-23269 (public app id)
   js/firebase-ai.js Firebase AI Logic hybrid integration (CDN, lazy-loaded)
-  js/ai-router.js   privacy-aware routing: Firebase AI Logic + MOCK fallback
+  js/ai-router.js   privacy-aware routing: Firebase AI Logic + local fallback
   js/prompts.js     single-turn prompt templates + JSON parsing
-  js/mock.js        labelled mock fallback engine (heuristic, not AI)
+  js/mock.js        labelled local rule-engine fallback (heuristic, not AI)
   js/app.js         UI logic
 ```
 

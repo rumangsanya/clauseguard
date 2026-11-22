@@ -2,12 +2,18 @@
 // ClauseGuard — UI logic
 // ----------------------------------------------------------------------------
 // Flow: paste contract → Analyze (privacy: device-only) → summary + clause
-// cards + questions → Draft pushback email (privacy: cloud, findings only).
-// Every AI output is badged with the engine that produced it.
+// cards + questions → optional cloud summary of the findings (privacy:
+// cloud, findings only) → Draft pushback email (privacy: cloud, findings
+// only). Every AI output is badged with the engine that produced it.
 // ============================================================================
 
 import { generate, detectOnDevice, currentMode } from "./ai-router.js";
-import { buildAnalyzePrompt, buildEmailPrompt, parseAnalysis } from "./prompts.js";
+import {
+  buildAnalyzePrompt,
+  buildEmailPrompt,
+  buildSummaryPrompt,
+  parseAnalysis,
+} from "./prompts.js";
 
 const SAMPLE_CONTRACT = `SERVICES AGREEMENT
 
@@ -46,7 +52,7 @@ function engineBadge(engine) {
     case "IN_CLOUD":
       return { text: "CLOUD", cls: "badge-cloud" };
     default:
-      return { text: "MOCK — not AI", cls: "badge-mock" };
+      return { text: "LOCAL RULE ENGINE — not AI", cls: "badge-mock" };
   }
 }
 
@@ -54,6 +60,25 @@ function setBadge(el, engine) {
   const b = engineBadge(engine);
   el.textContent = b.text;
   el.className = "badge " + b.cls;
+  el.hidden = false;
+}
+
+/**
+ * Descriptive badge for the optional cloud-summary step: names the actual
+ * engine behind the Firebase AI Logic call (response.inferenceSource),
+ * e.g. "Cloud — Gemini via Firebase AI Logic".
+ */
+function setSourceBadge(el, engine) {
+  if (engine === "IN_CLOUD") {
+    el.textContent = "Cloud — Gemini via Firebase AI Logic";
+    el.className = "badge badge-cloud";
+  } else if (engine === "ON_DEVICE") {
+    el.textContent = "On-device — Gemini Nano via Firebase AI Logic";
+    el.className = "badge badge-device";
+  } else {
+    el.textContent = "LOCAL RULE ENGINE — not AI";
+    el.className = "badge badge-mock";
+  }
   el.hidden = false;
 }
 
@@ -104,6 +129,12 @@ function renderAnalysis(analysis, engine) {
     .map((q) => `<li>${escapeHtml(q)}</li>`)
     .join("");
 
+  // Reset the optional cloud-summary step for the new analysis.
+  $("cloudSummaryBadge").hidden = true;
+  $("cloudSummaryText").hidden = true;
+  $("cloudSummaryText").textContent = "";
+  $("cloudSummaryNote").hidden = true;
+
   $("emailSection").hidden = false;
   $("emailOutput").hidden = true;
 }
@@ -140,11 +171,49 @@ async function onAnalyze() {
     errorEl.textContent =
       "Analysis failed: " +
       (err && err.message ? err.message : String(err)) +
-      " — if the private on-device engine is unavailable, ClauseGuard will not upload your contract. Try Chrome with Gemini Nano enabled.";
+      " — your contract text was not uploaded anywhere: analysis only ever runs on this device (Gemini Nano when available, otherwise the local rule engine).";
     errorEl.hidden = false;
   } finally {
     btn.disabled = false;
     btn.textContent = "Analyze contract";
+  }
+}
+
+async function onCloudSummary() {
+  if (!lastAnalysis) return;
+  const btn = $("cloudSummaryBtn");
+  const out = $("cloudSummaryText");
+  const note = $("cloudSummaryNote");
+  btn.disabled = true;
+  btn.textContent = "Summarizing…";
+  note.hidden = true;
+  try {
+    // Optional step: ONLY the extracted findings go to Firebase AI Logic in
+    // the cloud (same path as the email draft) — never the raw contract.
+    const { text, engine } = await generate(buildSummaryPrompt(lastAnalysis), {
+      kind: "summary",
+      privacy: "cloud",
+      context: lastAnalysis,
+    });
+    setSourceBadge($("cloudSummaryBadge"), engine);
+    out.textContent = text;
+    out.hidden = false;
+    if (engine === "MOCK") {
+      // Honest error state: the cloud call could not be completed, so the
+      // router produced this summary locally instead. Local results stand.
+      note.textContent =
+        "Cloud AI was unavailable (offline, quota, or attestation), so this summary was produced locally by the rule engine instead — your results above are unchanged.";
+      note.hidden = false;
+    }
+  } catch (err) {
+    out.textContent =
+      "Cloud summary failed: " +
+      (err && err.message ? err.message : String(err)) +
+      " — your local results above are unaffected.";
+    out.hidden = false;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Summarize findings with cloud AI";
   }
 }
 
@@ -181,5 +250,6 @@ document.addEventListener("DOMContentLoaded", () => {
     $("contractInput").value = SAMPLE_CONTRACT;
   });
   $("analyzeBtn").addEventListener("click", onAnalyze);
+  $("cloudSummaryBtn").addEventListener("click", onCloudSummary);
   $("emailBtn").addEventListener("click", onDraftEmail);
 });

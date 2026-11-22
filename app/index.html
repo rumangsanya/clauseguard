@@ -26,9 +26,11 @@
     <section class="panel">
       <h2>1 · Paste the contract</h2>
       <p class="hint">
-        The raw text is analyzed with an <em>on-device-only</em> model
-        (Firebase AI Logic <code>ONLY_ON_DEVICE</code>). If no on-device model
-        is available, ClauseGuard refuses instead of uploading it.
+        The raw text is analyzed <em>only on this device</em> (Firebase AI
+        Logic <code>ONLY_ON_DEVICE</code>). If no on-device AI model is
+        available in this browser, analysis falls back to a local rule
+        engine that also runs entirely on this device — either way, your
+        contract text never leaves the device and is never uploaded.
       </p>
       <textarea id="contractInput" rows="12"
         placeholder="Paste the contract / SOW / MSA text here…"></textarea>
@@ -51,6 +53,21 @@
       <div class="panel">
         <h2>Questions to ask before signing</h2>
         <ul id="questionsList"></ul>
+      </div>
+
+      <div class="panel">
+        <h2>Optional · Summarize findings with cloud AI <span id="cloudSummaryBadge" class="badge" hidden></span></h2>
+        <p class="hint">
+          Sends <strong>only the extracted findings above</strong> (clause
+          titles, severities and suggested asks) to Firebase AI Logic in the
+          cloud for a short summary — never your raw contract text. The badge
+          shows where the summary actually ran.
+        </p>
+        <div class="actions">
+          <button id="cloudSummaryBtn" type="button" class="primary">Summarize findings with cloud AI</button>
+        </div>
+        <p id="cloudSummaryNote" class="hint" hidden></p>
+        <p id="cloudSummaryText" hidden></p>
       </div>
     </section>
 
