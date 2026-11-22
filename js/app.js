@@ -7,13 +7,13 @@
 // only). Every AI output is badged with the engine that produced it.
 // ============================================================================
 
-import { generate, detectOnDevice, currentMode } from "./ai-router.js";
+import { generate, detectOnDevice, currentMode } from "./ai-router.js?v=20261122-2";
 import {
   buildAnalyzePrompt,
   buildEmailPrompt,
   buildSummaryPrompt,
   parseAnalysis,
-} from "./prompts.js";
+} from "./prompts.js?v=20261122-2";
 
 const SAMPLE_CONTRACT = `SERVICES AGREEMENT
 

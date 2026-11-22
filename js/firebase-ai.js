@@ -26,7 +26,7 @@
 // test the live path from a hosted origin. Never commit debug tokens.
 // ============================================================================
 
-import { appCheckSiteKey } from "./config.js";
+import { appCheckSiteKey } from "./config.js?v=20261122-2";
 
 const SDK_VERSION = "12.5.0"; // >= 12.5.0 required for response.inferenceSource
 const CDN_BASE = `https://www.gstatic.com/firebasejs/${SDK_VERSION}`;
