@@ -18,25 +18,29 @@
 // The SDK is loaded from the Firebase CDN with dynamic import() so that the
 // unconfigured local-dev build never touches the network for these modules.
 //
-// The project (clauseguard-23269) and AI Logic are live. One console step
-// remains: Firebase AI Logic requires App Check, so the web app's attestation
-// provider (reCAPTCHA Enterprise site key) must be registered in the Firebase
-// console and App Check initialized here before calls succeed from a hosted
-// origin (see BLOCKERS.md). For local development, use the debug provider and
-// register the debug token in the console. Never commit tokens.
+// The project (clauseguard-23269), AI Logic, and App Check are live: the
+// web app is registered in the Firebase console with the Fraud Defense
+// (reCAPTCHA Enterprise) provider, and App Check is initialized below —
+// before getAI — so inference requests carry an attestation token.
+// Inference from localhost may still be rejected by App Check enforcement;
+// test the live path from a hosted origin. Never commit debug tokens.
 // ============================================================================
+
+import { appCheckSiteKey } from "./config.js";
 
 const SDK_VERSION = "12.5.0"; // >= 12.5.0 required for response.inferenceSource
 const CDN_BASE = `https://www.gstatic.com/firebasejs/${SDK_VERSION}`;
 
 let modelCache = {};
+let appCheckReady = false;
 
 async function loadSdk() {
-  const [appModule, aiModule] = await Promise.all([
+  const [appModule, aiModule, appCheckModule] = await Promise.all([
     import(`${CDN_BASE}/firebase-app.js`),
     import(`${CDN_BASE}/firebase-ai.js`),
+    import(`${CDN_BASE}/firebase-app-check.js`),
   ]);
-  return { ...appModule, ...aiModule };
+  return { ...appModule, ...aiModule, ...appCheckModule };
 }
 
 /**
@@ -48,10 +52,20 @@ async function getModel(firebaseConfig, modeName) {
 
   const sdk = await loadSdk();
   const app = sdk.initializeApp(firebaseConfig);
-  const ai = sdk.getAI(app, { backend: new sdk.GoogleAIBackend() });
 
-  // TODO App Check: initialize App Check on `app` here once the project's
-  // reCAPTCHA Enterprise site key exists (registration pending — BLOCKERS.md).
+  // App Check must be initialized BEFORE AI Logic so that inference
+  // requests carry an attestation token (Fraud Defense / reCAPTCHA
+  // Enterprise provider; the site key is a public identifier, see
+  // js/config.js). Guarded so repeat getModel() calls don't re-init.
+  if (!appCheckReady) {
+    sdk.initializeAppCheck(app, {
+      provider: new sdk.ReCaptchaEnterpriseProvider(appCheckSiteKey),
+      isTokenAutoRefreshEnabled: true,
+    });
+    appCheckReady = true;
+  }
+
+  const ai = sdk.getAI(app, { backend: new sdk.GoogleAIBackend() });
 
   const model = sdk.getGenerativeModel(ai, {
     mode: sdk.InferenceMode[modeName],

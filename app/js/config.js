@@ -31,9 +31,10 @@ export function isFirebaseConfigured() {
   );
 }
 
-// Optional: App Check site key (reCAPTCHA Enterprise) for the Firebase project.
-// Firebase AI Logic requires App Check; the attestation provider still has to
-// be registered in the Firebase console (see BLOCKERS.md) before this can be
-// filled in. For local development use an App Check DEBUG token instead.
-// **Never commit a debug token.**
-// export const appCheckSiteKey = "";
+// App Check site key (reCAPTCHA Enterprise) for the Firebase project.
+// Firebase AI Logic requires App Check. The "ClauseGuard Web" app is
+// registered in the Firebase console with the Fraud Defense (reCAPTCHA
+// Enterprise) provider (status: Registered, 22 Nov 2026). A site key is a
+// public identifier, not a secret — it ships in every client build.
+// **Never commit an App Check DEBUG token** (local dev only).
+export const appCheckSiteKey = "6LfKziwuAAAAAARS85GvdYGt65d08KgjVqpMxniA";
