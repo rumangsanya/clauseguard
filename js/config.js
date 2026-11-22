@@ -10,9 +10,9 @@
 //
 // With a real config present, ALL runtime inference routes through Firebase
 // AI Logic (see js/firebase-ai.js), as the #BuildHybridAI rules require.
-// The only fallback is the clearly-labelled local MOCK engine (js/mock.js),
-// used when Firebase is unreachable — it is a deterministic heuristic, not a
-// model API, and it never leaves the device.
+// The only fallback is the clearly-labelled local rule engine (js/mock.js,
+// not AI), used when Firebase is unreachable — it is a deterministic
+// heuristic, not a model API, and it never leaves the device.
 // ============================================================================
 
 export const firebaseConfig = {

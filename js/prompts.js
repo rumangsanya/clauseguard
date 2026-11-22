@@ -60,6 +60,36 @@ export function buildEmailPrompt(analysis) {
   ].join("\n");
 }
 
+/**
+ * Optional step: summarize the EXTRACTED FINDINGS with the cloud model.
+ * Privacy: this prompt is built only from the analysis result (clause
+ * titles, severities, explanations, suggested asks, questions) — the raw
+ * contract text is never included, mirroring buildEmailPrompt.
+ */
+export function buildSummaryPrompt(analysis) {
+  const findings = (analysis.clauses || [])
+    .map(
+      (c, i) =>
+        `${i + 1}. [${(c.severity || "medium").toUpperCase()}] ${c.title}: ` +
+        `${c.plainEnglish || ""} Suggested ask: ${c.action || ""}`
+    )
+    .join("\n");
+  const questions = (analysis.questions || []).map((q) => "- " + q).join("\n");
+  return [
+    "Summarize the contract risk findings below for a freelancer in 3-4",
+    "short, plain-English sentences. Say what kind of deal this looks like,",
+    "name the most serious risks first, and end with what the freelancer",
+    "should discuss with the client before signing. Base the summary ONLY",
+    "on these findings — do not invent clauses or facts that are not listed.",
+    "",
+    "FINDINGS:",
+    findings || "(none)",
+    "",
+    "QUESTIONS TO ASK THE CLIENT:",
+    questions || "(none)",
+  ].join("\n");
+}
+
 /** Extract and parse the first JSON object from a model response. */
 export function parseAnalysis(text) {
   if (!text) throw new Error("Empty model response.");
